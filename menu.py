@@ -119,7 +119,7 @@ def gpioloop():
       GPIO.output(relaisGPIO, GPIO.LOW)
       global counter
       counter=counter+1
-      print "Relais eingeschalten " + str(counter) + ".loop Timestamp: " + time.strftime("%d.%m.%Y %H:%M:%S")
+      print "Relais geschlossen " + str(counter) + ".loop Timestamp: " + time.strftime("%d.%m.%Y %H:%M:%S")
       time.sleep(onTime)
       GPIO.output(relaisGPIO, GPIO.HIGH)
       time.sleep(offTime)
