@@ -29,7 +29,6 @@ def entfernung():
  
     # Vergangene Zeit
     Zeitdifferenz = Endzeit - Startzeit
-	
     # Schallgeschwindigkeit (34300 cm/s) einbeziehen
     entfernung = (Zeitdifferenz * 34300) / 2
  
