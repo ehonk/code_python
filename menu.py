@@ -16,8 +16,8 @@ import time
 import RPi.GPIO as GPIO
 
 relaisGPIO = 13
-offTime = 5
-onTime = 5
+offTime = 90
+onTime = 30
 counter = 0
  
 # Main definition - constants
@@ -38,6 +38,9 @@ def main_menu():
     print "2. On Zeit definieren"
     print "3. Einamlig"
     print "4. n-Wiederholungen"
+    print ""
+    print "5. Relais schliessen"
+    print "6. Relais öffnen"
     print "\n0. Quit"
     choice = raw_input(" >>  ")
     exec_menu(choice)
@@ -106,6 +109,21 @@ def nloop():
     gpioloop()
     return
 
+def closeRelais():
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(relaisGPIO, GPIO.OUT)
+    GPIO.output(relaisGPIO, GPIO.LOW)
+    print "Relais geschlossen Timestamp: " + time.strftime("%d.%m.%Y %H:%M:%S")
+    main_menu()
+    return
+
+def openRelais():
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(relaisGPIO, GPIO.OUT)
+    GPIO.output(relaisGPIO, GPIO.HIGH)
+    print "Relais geöffnet Timestamp: " + time.strftime("%d.%m.%Y %H:%M:%S")
+    main_menu()
+    return
 
 def gpioloop():
     # RPi.GPIO Layout verwenden (wie Pin-Nummern)
@@ -120,9 +138,9 @@ def gpioloop():
       global counter
       counter=counter+1
       print "Relais eingeschalten " + str(counter) + ".loop Timestamp: " + time.strftime("%d.%m.%Y %H:%M:%S")
-      time.sleep(onTime)
-      GPIO.output(relaisGPIO, GPIO.HIGH)
       time.sleep(offTime)
+      GPIO.output(relaisGPIO, GPIO.HIGH)
+      time.sleep(onTime)
 
 
 # Exit program
@@ -140,7 +158,8 @@ menu_actions = {
     '2': setOnTime,
     '3': oneloop,
     '4': nloop,
-    '5': back,
+    '5': closeRelais,
+    '6': openRelais, 
     '0': exit,
 }
  
