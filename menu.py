@@ -15,14 +15,16 @@ import sys, os
 import time
 import RPi.GPIO as GPIO
 
-relaisGPIO = 13
+relaisGPIO = 13 # Pin 13 (GPIO 27) auf Input setzen
+GPIO_IN_PIN = 15 # Pin 15 (GPIO 22) auf Input setzen
 offTime = 90
 onTime = 30
 counter = 0
+filename = "relaislog.txt"
  
 # Main definition - constants
 menu_actions  = {}  
- 
+
 # =======================
 #     MENUS FUNCTIONS
 # =======================
@@ -38,9 +40,13 @@ def main_menu():
     print "2. On Zeit definieren"
     print "3. Einamlig"
     print "4. n-Wiederholungen"
+    print "5. Einamlig GPIO-IN Check"
+    print "6. n-Wiederholungen GPIO-IN Check"
     print ""
-    print "5. Relais schliessen"
-    print "6. Relais öffnen"
+    print "10. Relais schliessen"
+    print "11. Relais öffnen"
+    print ""
+    print "12. check GPIO IN Status"
     print "\n0. Quit"
     choice = raw_input(" >>  ")
     exec_menu(choice)
@@ -104,6 +110,82 @@ def oneloop():
     time.sleep(offTime)
     return
 
+def checkGPIOIN():
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(GPIO_IN_PIN, GPIO.IN)
+    if GPIO.input(GPIO_IN_PIN) == GPIO.HIGH:
+        print "GPIO " + str(GPIO_IN_PIN) + " ist high"
+    else:
+        print "GPIO " + str(GPIO_IN_PIN) + " ist low"
+    main_menu()
+    return
+
+def oneloop_wGPIO():
+    print "do oneloop with GPIO Check"
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(GPIO_IN_PIN, GPIO.IN)
+
+    openRelais()
+    time.sleep(onTime)
+    
+    closeRelais()
+    time.sleep(offTime)
+
+    if GPIO.input(GPIO_IN_PIN) == GPIO.HIGH:
+        print "GPIO " + str(GPIO_IN_PIN) + " ist high"
+    else:
+        print "GPIO " + str(GPIO_IN_PIN) + " ist low"
+    
+    main_menu()
+    return
+
+
+
+def nloop_wGPIO():
+    print "do n-loops"
+    print "Opening the file..."
+
+    target = open(filename, 'a')	# append
+    target.truncate()
+
+    # RPi.GPIO Layout verwenden (wie Pin-Nummern)
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(GPIO_IN_PIN, GPIO.IN)
+    
+    # Pin 11 (GPIO 17) auf Output setzen
+    GPIO.setup(relaisGPIO, GPIO.OUT)
+    
+    # Dauersschleife
+    while 1:
+      GPIO.output(relaisGPIO, GPIO.LOW)
+      global counter
+      counter=counter+1
+      print "1 | " + time.strftime("%d.%m.%Y %H:%M:%S") + " | Relais eingeschalten " + str(counter) + ".loop Timestamp: " 
+      line1 = "1 | " + time.strftime("%d.%m.%Y %H:%M:%S") + " | Relais eingeschalten " + str(counter) + ".loop Timestamp: " 
+      target.write(line1)
+      target.write("\n")
+
+      time.sleep(offTime)
+      GPIO.output(relaisGPIO, GPIO.HIGH)
+      print "2 | " + time.strftime("%d.%m.%Y %H:%M:%S") + " | Relais ausgeschalten " + str(counter) + ".loop Timestamp: " 
+      line2 = "2 | " + time.strftime("%d.%m.%Y %H:%M:%S") + " | Relais ausgeschalten " + str(counter) + ".loop Timestamp: " 
+      target.write(line2)
+      target.write("\n")
+
+      time.sleep(onTime)
+      if GPIO.input(GPIO_IN_PIN) == GPIO.HIGH:
+        print "3 | " + time.strftime("%d.%m.%Y %H:%M:%S") + " | GPIO Status ausgelesen: " + str(GPIO_IN_PIN) + " ist high"
+        line3 = "3 | " + time.strftime("%d.%m.%Y %H:%M:%S") + " | GPIO Status ausgelesen: " + str(GPIO_IN_PIN) + " ist high"
+        target.write(line3)
+        target.write("\n")
+      else:
+        print "3 | " +  time.strftime("%d.%m.%Y %H:%M:%S") + " | GPIO Status ausgelesen: " + str(GPIO_IN_PIN) + " ist low"
+        line3 = "3 | " + time.strftime("%d.%m.%Y %H:%M:%S") + " | GPIO Status ausgelesen: " + str(GPIO_IN_PIN) + " ist low"
+        target.write(line3)
+        target.write("\n")
+
+    return
+
 def nloop():
     print "do n-loops"
     gpioloop()
@@ -114,7 +196,7 @@ def closeRelais():
     GPIO.setup(relaisGPIO, GPIO.OUT)
     GPIO.output(relaisGPIO, GPIO.LOW)
     print "Relais geschlossen Timestamp: " + time.strftime("%d.%m.%Y %H:%M:%S")
-    main_menu()
+    # main_menu()
     return
 
 def openRelais():
@@ -122,7 +204,7 @@ def openRelais():
     GPIO.setup(relaisGPIO, GPIO.OUT)
     GPIO.output(relaisGPIO, GPIO.HIGH)
     print "Relais geöffnet Timestamp: " + time.strftime("%d.%m.%Y %H:%M:%S")
-    main_menu()
+    # main_menu()
     return
 
 def gpioloop():
@@ -158,8 +240,11 @@ menu_actions = {
     '2': setOnTime,
     '3': oneloop,
     '4': nloop,
-    '5': closeRelais,
-    '6': openRelais, 
+    '5': oneloop_wGPIO,
+    '6': nloop_wGPIO,
+    '10': closeRelais,
+    '11': openRelais, 
+    '12': checkGPIOIN, 
     '0': exit,
 }
  
@@ -170,4 +255,6 @@ menu_actions = {
 # Main Program
 if __name__ == "__main__":
     # Launch main menu
+    GPIO.cleanup()  
+
     main_menu()
